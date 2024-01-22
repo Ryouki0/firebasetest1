@@ -22,11 +22,11 @@ const CreateAccountScreen = ({route, navigation}) => {
         try{
             const fakeEmail = `${userName}@example.com`;
             console.log('fakeEmail:', fakeEmail);
-            auth().createUserWithEmailAndPassword(fakeEmail, password).then(async (user) =>{
+            await auth().createUserWithEmailAndPassword(fakeEmail, password).then(async (user) =>{
                 console.log('user in createWithemail    ', user.user.uid);
-                await firestore().collection('Users').add({Username: userName, uid: user.user.uid, PrivateChatRooms: []});
+                await firestore().collection('Users').doc(user.user.uid).set({Username: userName, uid: user.user.uid, PrivateChatRooms: []});
             })
-            navigation.navigate('WelcomeScreen');
+            navigation.navigate('HomeScreen');
         }catch(err){
             console.log('error in createAccountScreen, addUser', err);
         }
@@ -34,9 +34,8 @@ const CreateAccountScreen = ({route, navigation}) => {
       
 
     return <View>
-        <Text style={{color: 'green'}}>asd</Text>
-        <TextInput placeholder='Username' style={{color:'black'}} onChangeText={(text) => {setUserName(text)}} placeholderTextColor={'grey'}></TextInput>
-        <TextInput placeholder='Password' style={{color: 'black'}} onChangeText={(text) => {setPassword(text)}} placeholderTextColor={'grey'}></TextInput>
+        <TextInput placeholder='Username' style={{color:'white'}} onChangeText={(text) => {setUserName(text)}} placeholderTextColor={'grey'}></TextInput>
+        <TextInput placeholder='Password' style={{color: 'white'}} onChangeText={(text) => {setPassword(text)}} placeholderTextColor={'grey'}></TextInput>
         <Button title='create account' onPress={() => {addUser()}}></Button>
     </View>
 }

@@ -6,32 +6,56 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  BackHandler,
 } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import Default_pfp from '../assets/Default_pfp.jpg';
 import firestore, {firebase} from '@react-native-firebase/firestore';
-import {useFocusEffect} from '@react-navigation/native';
+import {useFocusEffect,} from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import createPrivateChatRoom from './createPrivateChatroom';
+import FirebaseImage from './FirebaseImage';
+
+
 
 function WelcomeScreen({route, navigation}) {
+
+  
+
+
+
+  useFocusEffect(
+    React.useCallback(() => {
+        const onBackPress = () => {
+            console.log('backbutton pressed inside welcomeScreen');
+            return true;
+        }
+        const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+        return () => subscription.remove()
+    }, [])
+)
+
+
   // Set an initializing state whilst Firebase connects
   const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState();
   const [allUsers, setAllUsers] = useState([]);
 
-  let currUser = auth().currentUser;
-  function logOut() {
-    auth()
-      .signOut()
-      .then(() => {
-        console.log('signed out');
-        navigation.navigate('LoginScreen');
-      });
-  }
+  
 
   //get all users
   useFocusEffect(
     React.useCallback(() => {
       let userList = [];
+      const subscriber = auth().onAuthStateChanged((user) => {
+        if(user != null){
+        console.log('user: ', user.uid);
+           firestore().collection('Users').doc(user.uid).get().then((currentUser) => {
+            setUser(currentUser);
+           })
+        }
+
+      })
       const getUsers = async () => {
         return new Promise(async () => {
           await firestore()
@@ -43,106 +67,38 @@ function WelcomeScreen({route, navigation}) {
               });
             });
           setAllUsers(userList);
-          userList.forEach(user => {
-            if (user.data().uid === currUser.uid) {                      //get the firestore user from the authentication server user
-             
-              setUser(user);
-              return 0;
-            }
-          });
+          
         });
       };
-
-      getUsers();
+      if(auth().currentUser != null){
+        getUsers();
+      }
+      return () => subscriber();
     }, []),
   );
 
-  async function createPrivateChatRoom(clickedUser) {
-    let roomID = null;
-    
-    await firestore()
-      .collection('Users')
-      .doc(user.id)
-      .get()
-      .then(documentSnapShot => {
-        documentSnapShot.data().PrivateChatRooms.forEach(room => {
-          if (room.otherUser === clickedUser.data().Username) {
-            roomID = room.chatRoomId;
-            console.log('roomID:  ', roomID)
-          }
-        });
-      });
-    if (roomID != null) {
-      navigation.navigate('ChatRoom', {loggedInUser: user.id, otherUser: clickedUser.id, roomID: roomID});
-      return 0;
-    } 
-    //if chatroom doesnt exists, create it
-    else {
-      const chatRoom = await firestore()
-        .collection('PrivateChatRooms')
-        .add({User1: user.data().Username, User2: clickedUser.data().Username});
-      console.log('chatroom data', chatRoom.id);
-      console.log('users id:        ', user.id);
-      const user2Name = clickedUser.data().Username;
-      const user1Name = user.data().Username;
-      firestore()
-        .collection('Users')
-        .doc(user.id)
-        .update({
-          PrivateChatRooms: firestore.FieldValue.arrayUnion({
-            otherUser: user2Name,
-            chatRoomId: chatRoom.id,
-          }),
-        });
 
-
-      firestore()
-        .collection('Users')
-        .doc(clickedUser.id)
-        .update({
-          PrivateChatRooms: firestore.FieldValue.arrayUnion({
-            otherUser: user1Name,
-            chatRoomId: chatRoom.id,
-          }),
-        });
-
-      try {
-        console.log('did it write? ');
-      } catch (err) {
-        console.log('error adding chatRoom: ', err);
-      }
-    }
-  }
-
+  
   return (
-    <View>
-      <Text style={{color: 'black'}}>
-        Welcome {user ? user.data().Username : <></>}{' '}
+    <>
+  
+  <View>
+      <Text style={{color: 'white'}}>
+        Welcome {user != null && user != undefined ? user.data().Username : <></>}{' '}
       </Text>
-      <Button
-        title="logout"
-        onPress={() => {
-          logOut();
-        }}></Button>
       <ScrollView horizontal={true} style={{flexDirection: 'row'}}>
         {allUsers.length > 0 ? (
-          allUsers.map(user => {
-            console.log('user.uid: ', user.data().uid);
+          allUsers.map(element => {
+            console.log('element.uid: ', element.data().uid);
             return (
               <TouchableOpacity
                 onPress={() => {
-                  createPrivateChatRoom(user);
+                  createPrivateChatRoom(user, element, navigation);
                 }}
-                key={user.data().uid}>
+                key={element.data().uid}>
                 <View style={{alignItems: 'center'}}>
-                  <Image
-                    source={Default_pfp}
-                    style={{
-                      width: 100,
-                      height: 100,
-                      borderRadius: 300,
-                    }}></Image>
-                  <Text style={{color: 'black'}}>{user.data().Username}</Text>
+                  <FirebaseImage imagePath={element.data().Pfp} style={{width: 100, height: 100, borderRadius: 300}}></FirebaseImage>
+                  <Text style={{color: 'white'}}>{element.data().Username}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -152,7 +108,12 @@ function WelcomeScreen({route, navigation}) {
         )}
       </ScrollView>
     </View>
+  
+    </>
   );
 }
+
+
+
 
 export default WelcomeScreen;

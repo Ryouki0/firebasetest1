@@ -68,19 +68,51 @@ function ChatRoom({route, navigation}) {
     return <>    
      <ScrollView  ref={ref => {this.scrollView = ref}}
     onContentSizeChange={() => this.scrollView.scrollToEnd({animated: false})}>
-        {loggedInUser
+       {loggedInUser
         ? (messages.map((mess, index) => {
             return <View key={index}>
                 {mess.user === loggedInUser.Username ? (
                     messages[index+1] === undefined ? (
                         
                         messages[index-1] === undefined ? (
-                            <Text style={styles.right}>{mess.message}</Text>
+                            mess.seen ? (
+                                <View style={{justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center'}}>
+                                    <FirebaseImage imagePath={mess.Pfp} style={{width: 30, height: 30, borderRadius: 300}}></FirebaseImage>
+                                    <Text style={styles.right}>{mess.message}</Text>
+                                </View> 
+                            ) : (
+                                <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
+                                    <Text style={[styles.right, {marginRight: 0}]}>{mess.message}</Text>
+                                    <Ionicons name='checkmark-circle' size={20} style={{verticalAlign: 'bottom'}}></Ionicons>
+
+                                </View>
+
+                            )
                         ) : (
                             messages[index-1].user === loggedInUser.Username ? (
-                                <Text style={[styles.right, {borderTopRightRadius: 10}]}>{mess.message}</Text>
+                                mess.seen ? (
+                                    <View style={{justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center'}}>
+                                        <FirebaseImage imagePath={mess.Pfp} style={{width: 30, height: 30, borderRadius: 300}}></FirebaseImage>
+                                        <Text style={[styles.right, {borderTopRightRadius: 10}]}>{mess.message}</Text>
+                                    </View>
+                                ) : (
+                                    <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
+                                    <Text style={[styles.right, {borderTopRightRadius: 10}, {marginRight: 0}]}>{mess.message}</Text>
+                                    <Ionicons name='checkmark-circle' size={20} style={{verticalAlign: 'bottom'}}></Ionicons>
+                                </View>
+                                )
                               ) : (
-                                <Text style={styles.right}>{mess.message}</Text>
+                                mess.seen ? (
+                                    <View style={{justifyContent: 'space-between', flexDirection: 'row', alignItems: 'center'}}>
+                                        <FirebaseImage imagePath={mess.Pfp} style={{width: 30, height: 30, borderRadius: 300}}></FirebaseImage>
+                                        <Text style={[styles.right]}>{mess.message}</Text>
+                                    </View>
+                                ) : (
+                                    <View style={{flexDirection: 'row', justifyContent: 'flex-end'}}>
+                                    <Text style={[styles.right, {marginRight: 0}]}>{mess.message}</Text>
+                                    <Ionicons name='checkmark-circle' size={20} style={{verticalAlign: 'bottom'}}></Ionicons>
+                                </View>
+                                )
                               )
                         )
                     ) 
@@ -194,7 +226,7 @@ const styles = StyleSheet.create({
         marginBottom: 2, 
         borderColor: '#3b3b3b',
         borderRadius: 30,
-        
+        marginRight: 20,
         maxWidth: 275,
         color: 'white',
         backgroundColor: '#3b3b3b',

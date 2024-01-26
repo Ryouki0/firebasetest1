@@ -15,14 +15,11 @@ import {useFocusEffect,} from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import createPrivateChatRoom from './createPrivateChatroom';
 import FirebaseImage from './FirebaseImage';
+import {AsyncStorage} from 'react-native';
+import getLastMessages from '../Functions/getLastMessages';
 
-
-
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 function WelcomeScreen({route, navigation}) {
-
-  
-
-
 
   useFocusEffect(
     React.useCallback(() => {
@@ -35,12 +32,9 @@ function WelcomeScreen({route, navigation}) {
     }, [])
 )
 
-
-  // Set an initializing state whilst Firebase connects
-  const [initializing, setInitializing] = useState(true);
   const [user, setUser] = useState();
   const [allUsers, setAllUsers] = useState([]);
-
+  const [lastMessages, setLastMessages] = useState();
   
 
   //get all users
@@ -54,8 +48,15 @@ function WelcomeScreen({route, navigation}) {
             setUser(currentUser);
            })
         }
-
       })
+
+      const getLastMess = async () => {
+        getLastMessages().then((result) => {
+          console.log('RESUILT: ', result);
+          setLastMessages(result);
+        })
+      }
+      getLastMess();
       const getUsers = async () => {
         return new Promise(async () => {
           await firestore()
@@ -86,7 +87,7 @@ function WelcomeScreen({route, navigation}) {
       <Text style={{color: 'white'}}>
         Welcome {user != null && user != undefined ? user.data().Username : <></>}{' '}
       </Text>
-      <ScrollView horizontal={true} style={{flexDirection: 'row'}}>
+      <ScrollView style={{flexDirection: 'row'}}>
         {allUsers.length > 0 ? (
           allUsers.map(element => {
             console.log('element.uid: ', element.data().uid);
@@ -96,9 +97,39 @@ function WelcomeScreen({route, navigation}) {
                   createPrivateChatRoom(user, element, navigation);
                 }}
                 key={element.data().uid}>
-                <View style={{alignItems: 'center'}}>
-                  <FirebaseImage imagePath={element.data().Pfp} style={{width: 100, height: 100, borderRadius: 300}}></FirebaseImage>
-                  <Text style={{color: 'white'}}>{element.data().Username}</Text>
+                <View style={{alignItems: 'center',paddingTop: 5, flexDirection: 'row'}}>
+                  <FirebaseImage imagePath={element.data().Pfp} style={{width: 70, height: 70, borderRadius: 300,
+                     marginLeft: 17}}></FirebaseImage>
+                  <View >
+                    <Text style={{color: 'darkgrey', 
+                    paddingBottom: 3, paddingLeft: 7, fontSize: 15}}>{element.data().Username}</Text>            
+                    {lastMessages ? (
+                      lastMessages.map((lastMess, idx) => {
+                        if(!lastMess){
+                          return <></>
+                        }
+                        if(lastMess.message === null){
+                          return;
+                        }
+                        if(lastMess.User === element.data().Username){
+                          if(lastMess.message.length >= 20){
+                            console.log('longer than 15: ', lastMess.message);
+                            return <Text style={{color: 'grey', paddingLeft: 7}} key={idx}>{
+                              lastMess.message.slice(0, 20)}...
+                              • {months[new Date(lastMess.time.seconds*1000)
+                            .getMonth()]} {new Date(lastMess.time.seconds*1000)
+                              .getDate().toString()}
+                              </Text>
+                          }
+                          return <Text style={{color: 'grey', paddingLeft: 7}} key={idx}>{lastMess.message} • {months[new Date(lastMess.time.seconds*1000)
+                            .getMonth()]} {new Date(lastMess.time.seconds*1000)
+                              .getDate().toString()}</Text>
+                        }
+                      })
+                    ) : (<Text> Test message</Text>)}
+                    
+                  </View>
+                 
                 </View>
               </TouchableOpacity>
             );

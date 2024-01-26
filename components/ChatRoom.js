@@ -5,7 +5,7 @@ import {ScrollView,FlatList  ,Text, TextInput, View, StyleSheet} from 'react-nat
 import { useFocusEffect } from '@react-navigation/native';
 import Default_pfp from '../assets/Default_pfp.jpg';
 import FirebaseImage from './FirebaseImage';
-
+import Ionicons from 'react-native-vector-icons/Ionicons';
 let loggedInUser = null;
 let otherUser = null;
 
@@ -16,7 +16,7 @@ function ChatRoom({route, navigation}) {
     const roomID = route.params.roomID;
     const loggedInUserID = route.params.loggedInUser;
     const otherUserID = route.params.otherUser;
-    const scrollView = useRef();
+   
 
     //console.log('IDS: ', loggedInUserID, otherUserID);
     firestore().collection('Users').doc(loggedInUserID).get().then((documentSnapShot) => {
@@ -44,7 +44,7 @@ function ChatRoom({route, navigation}) {
         }
         try{
             firestore().collection('PrivateChatRooms').doc(roomID).update({Messages: firestore.FieldValue
-                .arrayUnion({message: messToSend, user: loggedInUser.Username, time: new Date()})});
+                .arrayUnion({message: messToSend, user: loggedInUser.Username, time: new Date(), seen: false})});
 
         }catch(err){
             console.log('error in sendMessage: ', err);
@@ -58,7 +58,6 @@ function ChatRoom({route, navigation}) {
                 console.log('Messages doesnt exists');
                 return -1;
             }else{
-                //console.log(documentSnapShot.data().Messages);
                 setMessages(documentSnapShot.data().Messages);
             }
         })
@@ -74,14 +73,15 @@ function ChatRoom({route, navigation}) {
             return <View key={index}>
                 {mess.user === loggedInUser.Username ? (
                     messages[index+1] === undefined ? (
+                        
                         messages[index-1] === undefined ? (
                             <Text style={styles.right}>{mess.message}</Text>
                         ) : (
                             messages[index-1].user === loggedInUser.Username ? (
                                 <Text style={[styles.right, {borderTopRightRadius: 10}]}>{mess.message}</Text>
-                            ) : (
+                              ) : (
                                 <Text style={styles.right}>{mess.message}</Text>
-                            )
+                              )
                         )
                     ) 
                     : (
@@ -156,7 +156,7 @@ function ChatRoom({route, navigation}) {
                                     messages[index-1].user === otherUser.Username ? (
                                         <View style={{flexDirection: 'row'}}>
                                 <FirebaseImage imagePath={otherUser.Pfp} style={{width: 35,
-                                     height: 35, borderRadius: 300, borderTopLeftRadius: 10}}></FirebaseImage>
+                                     height: 35, borderRadius: 300}}></FirebaseImage>
                                 <Text style={[styles.left, {marginLeft: 8}, {borderTopLeftRadius: 10}]}>{mess.message}</Text>
                             </View>
                                         ) : (
@@ -174,10 +174,15 @@ function ChatRoom({route, navigation}) {
         : (<></>)}
 
     </ScrollView>
-    <TextInput placeholder='Type something...' placeholderTextColor={'grey'} value={messToSend} style={{color:'white'}} 
+    <View style={{flexDirection: 'row', borderWidth: 1, borderColor: 'grey', borderRadius: 30, height: 50}}>
+    <TextInput placeholder='Type something...' placeholderTextColor={'grey'} value={messToSend} style={{color:'white',
+     width: 300, margin: 10, height: 40, alignSelf: 'center'}} 
     onChangeText={(mess) => {setMessToSend(mess)}}
     onSubmitEditing={() => 
         {sendMessage()}}></TextInput>
+        <Ionicons name='send-outline' size={20}  onPress={() => {sendMessage()}} style={{width: 30, alignSelf: 'center'}}></Ionicons>
+    </View>
+    
     </>
 }
 

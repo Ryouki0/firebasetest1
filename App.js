@@ -28,7 +28,9 @@ function App() {
       <Stack.Screen name='LoginScreen' options={{headerShown: false}} component={LoginScreen}></Stack.Screen>
       <Stack.Screen name='CreateAccountScreen' component={CreateAccountScreen}></Stack.Screen>
       <Stack.Screen name='HomeScreen' options={{headerShown: false}} component={HomeScreen}></Stack.Screen>
-      <Stack.Screen name='ChatRoom' component={ChatRoom}></Stack.Screen>
+      <Stack.Screen name='ChatRoom' component={ChatRoom} options={
+        ({ route }) => {return {title: route.params.otherUserName}}
+      }></Stack.Screen>
     </Stack.Navigator>
   </NavigationContainer>
 }

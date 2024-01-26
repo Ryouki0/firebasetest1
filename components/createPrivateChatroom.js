@@ -18,7 +18,7 @@ async function createPrivateChatRoom(user, clickedUser, navigation) {
         });
       });
     if (roomID != null) {
-      navigation.navigate('ChatRoom', {loggedInUser: user.id, otherUser: clickedUser.id, roomID: roomID});
+      navigation.navigate('ChatRoom', {loggedInUser: user.id, otherUser: clickedUser.id, roomID: roomID, otherUserName: clickedUser.data().Username});
       return 0;
     } 
     //if chatroom doesnt exists, create it
